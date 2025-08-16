@@ -1,0 +1,121 @@
+import tkinter as tk
+from tkinter import messagebox, simpledialog
+import json
+import os
+
+CONTACTS_FILE = "contacts.json"
+
+# Load contacts from file
+def load_contacts():
+    if os.path.exists(CONTACTS_FILE):
+        with open(CONTACTS_FILE, "r") as f:
+            return json.load(f)
+    return []
+
+# Save contacts to file
+def save_contacts():
+    with open(CONTACTS_FILE, "w") as f:
+        json.dump(contacts, f, indent=4)
+
+# Add new contact
+def add_contact():
+    name = entry_name.get().strip()
+    phone = entry_phone.get().strip()
+    email = entry_email.get().strip()
+
+    if name and phone and email:
+        contacts.append({"name": name, "phone": phone, "email": email})
+        save_contacts()
+        update_listbox()
+        entry_name.delete(0, tk.END)
+        entry_phone.delete(0, tk.END)
+        entry_email.delete(0, tk.END)
+        messagebox.showinfo("Success", "Contact added successfully!")
+    else:
+        messagebox.showwarning("Input Error", "All fields are required!")
+
+# Update contact listbox
+def update_listbox():
+    listbox.delete(0, tk.END)
+    for c in contacts:
+        listbox.insert(tk.END, f"{c['name']} | {c['phone']} | {c['email']}")
+
+# Delete selected contact
+def delete_contact():
+    selected = listbox.curselection()
+    if selected:
+        index = selected[0]
+        removed = contacts.pop(index)
+        save_contacts()
+        update_listbox()
+        messagebox.showinfo("Deleted", f"Deleted contact: {removed['name']}")
+    else:
+        messagebox.showwarning("Selection Error", "No contact selected!")
+
+# Edit selected contact
+def edit_contact():
+    selected = listbox.curselection()
+    if selected:
+        index = selected[0]
+        contact = contacts[index]
+
+        new_name = simpledialog.askstring("Edit Contact", "Enter new name:", initialvalue=contact['name'])
+        new_phone = simpledialog.askstring("Edit Contact", "Enter new phone:", initialvalue=contact['phone'])
+        new_email = simpledialog.askstring("Edit Contact", "Enter new email:", initialvalue=contact['email'])
+
+        if new_name and new_phone and new_email:
+            contacts[index] = {"name": new_name, "phone": new_phone, "email": new_email}
+            save_contacts()
+            update_listbox()
+            messagebox.showinfo("Updated", "Contact updated successfully!")
+        else:
+            messagebox.showwarning("Input Error", "All fields are required!")
+    else:
+        messagebox.showwarning("Selection Error", "No contact selected!")
+
+# ---------------- GUI ----------------
+root = tk.Tk()
+root.title("Contact Management System")
+root.geometry("500x400")
+
+contacts = load_contacts()
+
+# Input fields
+frame_input = tk.Frame(root)
+frame_input.pack(pady=10)
+
+tk.Label(frame_input, text="Name").grid(row=0, column=0, padx=5, pady=5)
+entry_name = tk.Entry(frame_input, width=25)
+entry_name.grid(row=0, column=1, padx=5, pady=5)
+
+tk.Label(frame_input, text="Phone").grid(row=1, column=0, padx=5, pady=5)
+entry_phone = tk.Entry(frame_input, width=25)
+entry_phone.grid(row=1, column=1, padx=5, pady=5)
+
+tk.Label(frame_input, text="Email").grid(row=2, column=0, padx=5, pady=5)
+entry_email = tk.Entry(frame_input, width=25)
+entry_email.grid(row=2, column=1, padx=5, pady=5)
+
+btn_add = tk.Button(frame_input, text="Add Contact", command=add_contact)
+btn_add.grid(row=3, column=0, columnspan=2, pady=10)
+
+# Contact list
+listbox = tk.Listbox(root, width=60, height=12)
+listbox.pack(pady=10)
+
+# Buttons
+frame_buttons = tk.Frame(root)
+frame_buttons.pack(pady=10)
+
+btn_edit = tk.Button(frame_buttons, text="Edit Contact", command=edit_contact)
+btn_edit.grid(row=0, column=0, padx=10)
+
+btn_delete = tk.Button(frame_buttons, text="Delete Contact", command=delete_contact)
+btn_delete.grid(row=0, column=1, padx=10)
+
+btn_exit = tk.Button(frame_buttons, text="Exit", command=root.destroy)
+btn_exit.grid(row=0, column=2, padx=10)
+
+update_listbox()
+
+root.mainloop()
